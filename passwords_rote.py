@@ -5,18 +5,21 @@ from passlib.hash import bcrypt
 
 from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-STORAGE_FOLDER = os.path.join(os.path.expanduser("~"), "local/share/passwords_rote")
+STORAGE_FOLDER = os.path.join(os.path.expanduser("~"),
+                              "local/share/passwords_rote")
 STORAGE_FILE = os.path.join(STORAGE_FOLDER, "rote.sqlite")
 
 Base = declarative_base()
+
+
 class Hash(Base):
     __tablename__ = "hashes"
     name = Column(String, primary_key=True)
     hash_ = Column(String)
+
 
 class HashDB(object):
     def __init__(self, db_file_name):
@@ -43,15 +46,17 @@ def store_password(name):
     Args:
       name - str, name under which store the password"""
     if not os.path.exists(STORAGE_FOLDER):
-        os.makedirs(STORAGE_FOLDER) 
+        os.makedirs(STORAGE_FOLDER)
 
     hash_db = HashDB(STORAGE_FILE)
     session = hash_db.create_session()
-    if session.query(Hash).filter(Hash.name==name).first():
+    if session.query(Hash).filter(Hash.name == name).first():
         if not click.confirm("Overwrite %s?" % name):
             return
-    password = click.prompt("Please enter the password", hide_input=True, confirmation_prompt=True)
-    new_hash = Hash(name=name, hash_=bcrypt.encrypt(password, rounds=14, salt_size=22))
+    password = click.prompt(
+        "Please enter the password", hide_input=True, confirmation_prompt=True)
+    new_hash = Hash(name=name, hash_=bcrypt.encrypt(
+        password, rounds=14, salt_size=22))
     session.merge(new_hash)
     session.commit()
 
@@ -65,9 +70,10 @@ def rote():
     for hash_ in stored_hashes:
         correct = False
         while not correct:
-            user_input = click.prompt("Please enter the password for %s" % hash_.name, hide_input=True)
+            user_input = click.prompt("Please enter the password for %s" %
+                                      hash_.name, hide_input=True)
             correct = bcrypt.verify(user_input, hash_.hash_)
-        
-    
+
+
 if __name__ == '__main__':
     main()
